@@ -14,6 +14,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/buses', require('./routes/busRoutes'));
 app.use('/api/routes', require('./routes/routeRoutes'));
 app.use('/api/trips', require('./routes/tripRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
 
 //middlewares
 app.use(require('./middlewares/userNotFoundError'));
