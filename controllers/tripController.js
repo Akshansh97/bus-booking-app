@@ -27,11 +27,24 @@ exports.addTrip = async (req, res) => {
 
 exports.getTrips = async (req, res) => {
     try {
-       // Populate route and bus details
-       const trips = await Trip.find()
-           .populate('route')
-           .populate('bus');
-       res.status(200).json(trips);
+        // Populate route and bus details with city information
+        const trips = await Trip.find()
+            .populate({
+                path: 'route',
+                populate: {
+                    path: 'fromCity',
+                    select: 'name state'
+                }
+            })
+            .populate({
+                path: 'route',
+                populate: {
+                    path: 'toCity',
+                    select: 'name state'
+                }
+            })
+            .populate('bus', 'busNumber busType operatorName');
+        res.status(200).json(trips);
     } catch (error) {
         console.error(error);
         res.send(error);
