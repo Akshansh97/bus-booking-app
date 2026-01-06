@@ -32,4 +32,18 @@ async function getAllUsers(req, res){
     }
 }
 
-module.exports = { addUser, getAllUsers };
+//get currently logged in user
+async function getMe(req, res){
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        if(!user){
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(error);
+    }
+}
+
+module.exports = { addUser, getAllUsers, getMe};

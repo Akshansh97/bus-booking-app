@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 
 // /api/auth
 
@@ -14,11 +15,19 @@ exports.login = async(req, res, next) => {
             err.name = 'UserNotFoundError';
             return next(err);
         }
-        if(user.password !== password) {
-            return res.status(401).json({ error: "Invalid Password" });
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            res.status(401).json({ error: "Invalid password" });
+            return;
         }
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            'secretKey',
+            { expiresIn: '1d' }
+        );
         res.status(200).json({
             message: "Login successful",
+            token,
             user: {
                 id: user._id,
                 name: user.name,
