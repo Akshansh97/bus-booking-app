@@ -19,7 +19,8 @@ const bookingSchema = new mongoose.Schema(
         },
         totalAmount: {
             type: Number,
-            default: 0
+            required: true,
+            min: 0
         },
         status: {
             type: String,
