@@ -1,46 +1,64 @@
 const Booking = require('../models/Booking');
 const Trip = require('../models/Trip');
 const User = require('../models/User');
-
+const mongoose = require('mongoose');
 // /api/bookings
 
 exports.createBooking = async (req, res) => {
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const { tripId } = req.body;
         const totalSeats = Number(req.body.totalSeats);
-        if (isNaN(totalSeats) || totalSeats <= 0) {
-            return res.status(400).json({ error: "Total seats must be a number" });
+        const userId = req.user.id;
+        if (!tripId || isNaN(totalSeats) || totalSeats <= 0) {
+            return res.status(400).json({ error: 'Invalid request' });
+        }
+        
+        const trip = await Trip.findOneAndUpdate(
+            {
+                _id: tripId,
+                status: 'SCHEDULED',
+                availableSeats: { $gte: totalSeats }
+            },
+            {
+                $inc: {availableSeats: -totalSeats},
+            },
+            {
+                new: true,
+                session
+            }
+        );
+        if (!trip) {
+            return res.status(400).json({ error: 'Trip not found or insufficient seats' });
         }
 
-        const userId = req.user.id;
-        if (!tripId || !userId || !totalSeats) {
-            return res.status(400).json({ error: "All fields are required" });
-        }
-        const trip = await Trip.findById(tripId);
-        if (!trip) {
-            return res.status(404).json({ error: "Trip not found" });
-        }
-        if (trip.status !== 'SCHEDULED') {
-            return res.status(400).json({ error: "Trip is not available for booking!" });
-        }
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        if (totalSeats > trip.availableSeats) {
-            return res.status(400).json({ error: "Not enough seats available!" });
-        }
-        trip.availableSeats -= totalSeats;
-        await trip.save();
-        const totalAmount = totalSeats * trip.price;
-        const booking = await Booking.create({ trip: tripId, user: userId, totalSeats, totalAmount });
+        const totalAmount = trip.price * totalSeats;
+
+        const booking = await Booking.create(
+            [{
+                trip: tripId,
+                user: userId,
+                totalSeats,
+                totalAmount
+            }],
+            { session }
+        );
+
+        await session.commitTransaction();
+        session.endSession();
+
         res.status(201).json({
-            message: "Booking created successfully",
-            booking
-        });
-    } catch (error) {
+            message: 'Booking created successfully',
+            booking: booking[0] // Return the first created booking
+        })
+    }
+    catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         console.error(error);
-        res.status(500).send(error);
+        res.status(400).send(error);
     }
 };
 
@@ -116,7 +134,7 @@ exports.cancelBooking = async (req, res) => {
         if (!booking) {
             return res.status(404).json({ error: "Booking not found" });
         }
-        if(booking.status === 'CANCELLED'){
+        if (booking.status === 'CANCELLED') {
             return res.status(400).json({ error: "Booking is already cancelled" });
         }
         const trip = await Trip.findById(booking.trip);

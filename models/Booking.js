@@ -26,6 +26,25 @@ const bookingSchema = new mongoose.Schema(
             type: String,
             enum: ['PENDING', 'CONFIRMED', 'CANCELLED'],
             default: 'PENDING'
+        },
+        payment: {
+            method: {
+                type: String,
+                enum: [
+                    'CARD',
+                    'UPI',
+                    'NETBANKING',
+                    'PAYPAL',
+                    'GIFT_CARD',
+                    'PAY_LATER'
+                ]
+            },
+            transactionId: {
+                type: String
+            },
+            paidAt: {
+                type: Date
+            }
         }
     },
     { timestamps: true }
