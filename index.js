@@ -2,7 +2,6 @@ const express = require('express');
 const connect = require('./config/db');
 const app = express();
 
-
 //database connection
 connect();
 
@@ -14,6 +13,7 @@ app.use('/api/buses', require('./routes/busRoutes'));
 app.use('/api/routes', require('./routes/routeRoutes'));
 app.use('/api/trips', require('./routes/tripRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
 
 //middlewares
 app.use(require('./middlewares/userNotFoundError'));
