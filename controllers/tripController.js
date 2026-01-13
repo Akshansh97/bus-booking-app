@@ -61,3 +61,37 @@ exports.getTrips = async (req, res) => {
         res.send(error);
     }
 };
+
+//update status
+//api/trips/status/:tripId
+exports.updateTripStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const trip = await Trip.findById(req.params.tripId);
+        if (!trip) {
+            return res.status(404).json({ message: 'Trip not found' });
+        }
+        trip.status = status;
+        await trip.save();
+        res.status(200).json({ message: 'Trip status updated successfully', trip });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(error);
+    }
+};
+
+exports.updateTripPrice = async (req, res) => {
+    try {
+        const { price } = req.body;
+        const trip = await Trip.findById(req.params.tripId);
+        if (!trip) {
+            return res.status(404).json({ message: 'Trip not found' });
+        }
+        trip.price = price;
+        await trip.save();
+        res.status(200).json({ message: 'Trip price updated successfully', trip });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(error);
+    }
+};
